@@ -24,7 +24,7 @@ var (
 
 var (
 	authSetupOnce sync.Once
-	httpClient    *httpClient
+	httpClient    *http.Client
 )
 
 func dial(netw, addr string) (net.Conn, error) {
