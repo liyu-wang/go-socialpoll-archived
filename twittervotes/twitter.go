@@ -95,6 +95,7 @@ func makeRequest(req *http.Request, params url.Values) (*http.Response, error) {
 	return httpClient.Do(req)
 }
 
+// votes channel is send-only channel
 func readFromTwitter(votes chan<- string) {
 	options, err := loadOptions()
 	if err != nil {
@@ -138,12 +139,16 @@ func readFromTwitter(votes chan<- string) {
 	}
 }
 
+// stopchan is a receive-only signal channel. It is this channel that,
+// outside the code, will signal on, which will tell our gorountine to stop.
 func startTwitterStream(stopchan <-chan struct{}, votes chan<- string) <-chan struct{} {
-	// buffer size of 1,
+	// buffer size of 1, which means that execution will not
+	// block until something reads the signal from the channel
 	stoppedchan := make(chan struct{}, 1)
 	go func() {
 		defer func() {
-			stoppedchan <- struct{}
+			// signals once stopping is complete
+			stoppedchan <- struct{}{}
 		}()
 		for {
 			select {
