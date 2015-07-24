@@ -1,0 +1,21 @@
+nsq
+#start nsqlookupd so nsqd instance are discoverable
+>nsqlookupd
+>nsqd --lookupd-tcp-address=localhost:4160
+# nsq_tail tool connects to the message queue topic and outputs any messages it notices
+>nsq_tail --topic="votes" --lookupd-http-address=localhost:4161
+
+mongodb
+>mongod --config /usr/local/etc/mongod.conf
+>show dbs
+>show collections
+>use ballots
+>db.polls.insert({"title":"Test poll","options":["happy","sad","fail","win"]})
+>db.polls.find({})
+
+how to run
+>mongod --config /usr/local/etc/mongod.conf
+>nsqlookupd
+>nsqd --lookupd-tcp-address=localhost:4160
+>./twittervotes
+>./counter
