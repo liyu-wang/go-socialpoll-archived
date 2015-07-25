@@ -14,6 +14,7 @@ func main() {
 // handler wrappers
 // ---------------------------
 
+// API key
 func withAPIKey(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !isValidAPIKey(r.URL.Query().Get("key")) {
@@ -24,6 +25,7 @@ func withAPIKey(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Database session
 func withData(d *mgo.Session, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		thisDb := d.Copy()
@@ -33,7 +35,8 @@ func withData(d *mgo.Session, f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func withVars(fn http.HandleFunc) http.HandlerFunc {
+// Per request variables
+func withVars(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		OpenVars(r)
 		defer CloseVars(r)
@@ -41,6 +44,7 @@ func withVars(fn http.HandleFunc) http.HandlerFunc {
 	}
 }
 
+// CORS header
 func withCORS(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
