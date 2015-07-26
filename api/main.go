@@ -1,13 +1,32 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"net/http"
+	"time"
+
+	"github.com/stretchr/graceful"
 
 	"gopkg.in/mgo.v2"
 )
 
 func main() {
-
+	var (
+		addr  = flag.String("addr", ":8080", "endpoint address")
+		mongo = flag.String("mongo", "localhost", "mongodb address")
+	)
+	flag.Parse()
+	log.Println("Dialing mongo", *mongo)
+	db, err := mgo.Dial(*mongo)
+	if err != nil {
+		log.Fatalln("failed to connect to mongo:", err)
+	}
+	defer db.Close()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/polls/", withCORS(withVars(withData(db, withAPIKey(handlePolls)))))
+	log.Println("Starting web server on", *addr)
+	graceful.Run(*addr, 1*time.Second, mux)
 }
 
 // ---------------------------
