@@ -26,6 +26,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/polls/", withCORS(withVars(withData(db, withAPIKey(handlePolls)))))
 	log.Println("Starting web server on", *addr)
+	// wait 1 sec before killing active requests and stopping the server.
 	graceful.Run(*addr, 1*time.Second, mux)
 }
 
