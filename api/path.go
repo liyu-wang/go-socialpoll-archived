@@ -4,15 +4,19 @@ import (
 	"strings"
 )
 
+// PathSeparator
 const PathSeparator = "/"
 
+// Path struct
 type Path struct {
 	Path string
 	ID   string
 }
 
+// NewPath func create object for any collection/id path
 func NewPath(p string) *Path {
 	var id string
+	// trim the leading and trailing slashes
 	p = strings.Trim(p, PathSeparator)
 	s := strings.Split(p, PathSeparator)
 	if len(s) > 1 {
@@ -22,6 +26,7 @@ func NewPath(p string) *Path {
 	return &Path{Path: p, ID: id}
 }
 
+// HasID func
 func (p *Path) HasID() bool {
 	return len(p.ID) > 0
 }

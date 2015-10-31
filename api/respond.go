@@ -8,6 +8,7 @@ import (
 
 // abstract decoding of data from Request
 func decodeBody(r *http.Request, v interface{}) error {
+	// closes the request body
 	defer r.Body.Close()
 	return json.NewDecoder(r.Body).Decode(v)
 }
@@ -26,7 +27,7 @@ func respond(w http.ResponseWriter, r *http.Request, status int, data interface{
 	}
 }
 
-// respond with error
+// respond with error info enveloped in an error object
 func respondErr(w http.ResponseWriter, r *http.Request, status int, args ...interface{}) {
 	respond(w, r, status, map[string]interface{}{
 		"error": map[string]interface{}{

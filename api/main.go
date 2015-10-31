@@ -13,8 +13,9 @@ import (
 
 func main() {
 	var (
+		// defines string flags with specified name, default value, and usage string.
 		addr  = flag.String("addr", ":8080", "endpoint address")
-		mongo = flag.String("mongo", "localhost", "mongodb address")
+		mongo = flag.String("mongo", "127.0.0.1", "mongodb address")
 	)
 	flag.Parse()
 	log.Println("Dialing mongo", *mongo)
@@ -24,10 +25,14 @@ func main() {
 	}
 	defer db.Close()
 	mux := http.NewServeMux()
+	// register a signle handler for all requests begin with the path /polls/
 	mux.HandleFunc("/polls/", withCORS(withVars(withData(db, withAPIKey(handlePolls)))))
 	log.Println("Starting web server on", *addr)
+	// specify time.Duration when running any http.Handler(ServeMux handler), which
+	// allow in-flight requests some time to complete before the function exits.
 	// wait 1 sec before killing active requests and stopping the server.
 	graceful.Run(*addr, 1*time.Second, mux)
+	log.Println("Stopping...")
 }
 
 // ---------------------------
