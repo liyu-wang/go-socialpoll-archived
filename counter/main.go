@@ -33,8 +33,12 @@ func main() {
 		}
 	}()
 
+	// -----------------------------------
+	// Connectiong to the database
+	// -----------------------------------
+
 	log.Println("Connecting to database...")
-	db, err := mgo.Dial("localhost")
+	db, err := mgo.Dial("127.0.0.1:27017")
 	if err != nil {
 		fatal(err)
 		return
@@ -46,6 +50,11 @@ func main() {
 	}()
 	pollData := db.DB("ballots").C("polls")
 
+	// -----------------------------------
+	// Consuming messages in NSQ
+	// -----------------------------------
+
+	// store the counters of votes
 	var counts map[string]int
 	var countsLock sync.Mutex
 
@@ -68,11 +77,18 @@ func main() {
 		return nil
 	}))
 
-	// connecting to the http port of the nsqlookupd instance, rather than NSQ instances
+	// connecting to the http port of the nsqlookupd instance,
+	// rather than NSQ instances.
+	// this abstraction means that our program doesn't need to know
+	// where the messages are coming from in order to consume them.
 	if err := q.ConnectToNSQLookupd("localhost:4161"); err != nil {
 		fatal(err)
 		return
 	}
+
+	// -----------------------------------
+	// Keeping the database updated
+	// -----------------------------------
 
 	log.Println("Waiting for votes on nsq...")
 	var updater *time.Timer
@@ -100,6 +116,10 @@ func main() {
 		}
 		updater.Reset(updateDuration)
 	})
+
+	// -----------------------------------
+	// Responding to Ctrl + C
+	// -----------------------------------
 
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

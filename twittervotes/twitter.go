@@ -21,6 +21,8 @@ type tweet struct {
 }
 
 var conn net.Conn
+
+// read the body of the response
 var reader io.ReadCloser
 
 var (
@@ -80,6 +82,7 @@ func setupTwitterAuth() {
 }
 
 func makeRequest(req *http.Request, params url.Values) (*http.Response, error) {
+	// ensure the initialization code only run once
 	authSetupOnce.Do(func() {
 		setupTwitterAuth()
 		httpClient = &http.Client{
@@ -109,6 +112,7 @@ func readFromTwitter(votes chan<- string) {
 	}
 	query := make(url.Values)
 	query.Set("track", strings.Join(options, ","))
+	// encodes the values into “URL encoded” form ("bar=baz&foo=quux") sorted by key.
 	req, err := http.NewRequest("POST", u.String(), strings.NewReader(query.Encode()))
 	if err != nil {
 		log.Println("creating filter request failed:", err)
@@ -124,6 +128,8 @@ func readFromTwitter(votes chan<- string) {
 	decoder := json.NewDecoder(reader)
 	for {
 		var tweet tweet
+		// Decode reads the next JSON-encoded value from its
+		// input and stores it in the value pointed to by tweet.
 		if err := decoder.Decode(&tweet); err != nil {
 			break
 		}
@@ -144,6 +150,9 @@ func readFromTwitter(votes chan<- string) {
 func startTwitterStream(stopchan <-chan struct{}, votes chan<- string) <-chan struct{} {
 	// buffer size of 1, which means that execution will not
 	// block until something reads the signal from the channel
+
+	// the sending side will block if the the reading
+	// side is not ready to receive the message.
 	stoppedchan := make(chan struct{}, 1)
 	go func() {
 		defer func() {
@@ -151,14 +160,21 @@ func startTwitterStream(stopchan <-chan struct{}, votes chan<- string) <-chan st
 			stoppedchan <- struct{}{}
 		}()
 		for {
+			// select picks the first channel that is ready and
+			// receives from it(or sends to it). If more than one
+			// of the channels are ready then it randomly picks
+			// which one to receive from. If none of the channels
+			// are ready, the statement blocks until one becomes available.
 			select {
 			case <-stopchan:
 				log.Println("stopping Twitter...")
 				return
 			default:
+				// the default case happens immediately
+				// if none of the channels are ready.
 				log.Println("Quering Twitter...")
 				readFromTwitter(votes)
-				log.Println(" (waiting)")
+				log.Println("  (waiting)")
 				time.Sleep(10 * time.Second) // wait before reconnecting
 			}
 		}

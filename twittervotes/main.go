@@ -21,7 +21,7 @@ var db *mgo.Session
 func dialdb() error {
 	var err error
 	log.Println("dialing mongodb: localhost")
-	db, err = mgo.Dial("localhost")
+	db, err = mgo.Dial("127.0.0.1:27017")
 	return err
 }
 
@@ -87,12 +87,19 @@ func main() {
 
 	// start things
 	votes := make(chan string) // chan for votes
+	// passing in the votes channel for it to receive from
+	// capturing the returned pub stop signal channel
 	publisherStoppedChan := publishVotes(votes)
+	// passing in the stopChan to receive the stop signal
+	// passing in the votes channel for it to send to
+	// capturing the returned twitter stream stop signal channel
 	twitterStoppedChan := startTwitterStream(stopChan, votes)
 	go func() {
 		for {
 			time.Sleep(1 * time.Minute)
 			closeConn()
+			// there are two goroutines that might try to
+			// access the stop variable at the same time
 			stoplock.Lock()
 			if stop {
 				stoplock.Unlock()
@@ -101,6 +108,13 @@ func main() {
 			stoplock.Unlock()
 		}
 	}()
+	// once the goroutine has started, we then block on the
+	// twitterStoppedChan by attempting to read from it.
+	// When signal is sent on stopChan, the signal will be sent
+	// on twitterStoppedChan.(check the startTwitterStream func)
+	// We close the votes channel which will cause the publisher's
+	// for...range loop to exit, and the publisher itself to stop,
+	// after which the signal will be sent on the publisherStoppedChan.
 	<-twitterStoppedChan
 	close(votes)
 	<-publisherStoppedChan
