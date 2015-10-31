@@ -43,7 +43,13 @@ browser
 http://localhost:8080/polls/?key=abc123
 http://localhost:8080/polls/561254b2a673478291b84635?key=abc123
 
+curl
+------------------------------------------------------------------
+curl -X GET http://localhost:8080/polls/?key=abc123
+curl -X GET http://localhost:8080/polls/561254b2a673478291b84635?key=abc123
 
+curl --data '{"title":"test","options":["one","two","three"]}' -X POST http://localhost:8080/polls/?key=abc123
 
+curl -X DELETE http://localhost:8080/polls/5634b6094c50511ddb000001?key=abc123
 
 
